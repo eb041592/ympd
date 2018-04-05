@@ -60,8 +60,8 @@ body {
 }
 
 #salamisandwich td:nth-child(2) span {
-  font-style:italic;
-  font-size:90%;
+  font-style: italic;
+  font-size: 90%;
 }
 
 tbody {
@@ -77,7 +77,7 @@ td:last-child, td:first-child {
   z-index: 9999;
 }
 
-/* Positioning */ 
+/* Positioning */
 .notifications.top-right {
   right: 10px;
   top: 60px;
@@ -95,7 +95,7 @@ button {
 }
 
 #trashmode span:last-child {
-  display:inline-block;
-  text-align:left;
-  width:2.8em;
+  display: inline-block;
+  text-align: left;
+  width: 2.8em;
 }
