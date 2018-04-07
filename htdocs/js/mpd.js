@@ -38,7 +38,6 @@ var app = $.sammy(function() {
         current_app = 'queue';
 
         $('#breadcrump').addClass('hide');
-        $('#filter').addClass('hide');
         $('#salamisandwich').removeClass('hide').find("tr:gt(0)").remove();
         $('#dirble_panel').addClass('hide');
         socket.send('MPD_API_GET_QUEUE,'+pagination);
@@ -50,9 +49,34 @@ var app = $.sammy(function() {
     function prepare() {
         $('#nav_links > li').removeClass('active');
         $('.page-btn').addClass('hide');
-        $('#add-all-songs').hide();
+
+        $('#filter').addClass('hide');
+        $('#addAll').addClass('hide');
         pagination = 0;
         browsepath = '';
+    }
+
+    function enable_addAll() {
+        $('#addAll').off(); /* remove previous binds */
+
+        $('#addAll').on('click', function() {
+            switch (current_app) {
+                case 'browse':
+                    socket.send('MPD_API_ADD_TRACK,' + browsepath);
+                    break;
+                case 'search':
+                    $('#salamisandwich > tbody').find('tr').each(
+                        function () { socket.send('MPD_API_ADD_TRACK,' + $(this).attr('uri')); });
+                    break;
+                default: return;
+            }
+
+            $('.top-right').notify({
+                message: {text: "Added all songs"},
+            }).show();
+        });
+
+        $('#addAll').removeClass('hide');
     }
 
     this.get(/\#\/(\d+)/, function() {
@@ -66,20 +90,15 @@ var app = $.sammy(function() {
         browsepath = this.params['splat'][1];
         pagination = parseInt(this.params['splat'][0]);
         current_app = 'browse';
-        $('#breadcrump').removeClass('hide').empty().append("<li><a href=\"#/browse/0/\" onclick=\"set_filter()\">root</a></li>");
+        $('#breadcrump').removeClass('hide').empty().append(
+            "<li><a href=\"#/browse/0/\" onclick=\"set_filter()\">root</a></li>");
         $('#filter').removeClass('hide');
+
         $('#salamisandwich').removeClass('hide').find("tr:gt(0)").remove();
         $('#dirble_panel').addClass('hide');
-        socket.send('MPD_API_GET_BROWSE,'+pagination+','+(browsepath ? browsepath : "/"));
-        // Don't add all songs from root
-        if (browsepath) {
-            var add_all_songs = $('#add-all-songs');
-            add_all_songs.off(); // remove previous binds
-            add_all_songs.on('click', function() {
-                socket.send('MPD_API_ADD_TRACK,'+browsepath);
-            });
-            add_all_songs.show();
-        }
+        socket.send('MPD_API_GET_BROWSE,' + pagination + ',' + (browsepath ? browsepath : "/"));
+
+        if (browsepath) { enable_addAll(); } /* don't enable functionality at root */
 
         $('#panel-heading').text("Browse database: "+browsepath);
         var path_array = browsepath.split('/');
@@ -99,6 +118,9 @@ var app = $.sammy(function() {
 
     this.get(/\#\/search\/(.*)/, function() {
         current_app = 'search';
+
+        enable_addAll();
+
         $('#salamisandwich').find("tr:gt(0)").remove();
         $('#dirble_panel').addClass('hide');
         var searchstr = this.params['splat'][0];
@@ -385,7 +407,7 @@ function webSocketConnect() {
                                 socket.send(onClickAction + "," + decodeURI($(this).parents("tr").attr("uri")));
                             $('.top-right').notify({
                                 message:{
-                                    text: "\"" + $('td:nth-last-child(3)', $(this).parents("tr")).text() + "\" added"
+                                    text: "Added \"" + $('td:nth-last-child(3)', $(this).parents("tr")).text() + "\""
                                 } }).show();
                             }).fadeTo('fast',1);
                     }
@@ -419,7 +441,7 @@ function webSocketConnect() {
                                     socket.send("MPD_API_ADD_TRACK," + decodeURI($(this).attr("uri")));
                                     $('.top-right').notify({
                                         message:{
-                                            text: "\"" + $('td:nth-last-child(3)', this).text() + "\" added"
+                                            text: "Added \"" + $('td:nth-last-child(3)', this).text() + "\""
                                         }
                                     }).show();
                                     break;
@@ -427,7 +449,7 @@ function webSocketConnect() {
                                     socket.send("MPD_API_ADD_PLAYLIST," + decodeURI($(this).attr("uri")));
                                     $('.top-right').notify({
                                         message:{
-                                            text: "\"" + $('td:nth-last-child(3)', this).text() + "\" added"
+                                            text: "Added \"" + $('td:nth-last-child(3)', this).text() + "\""
                                         }
                                     }).show();
                                     break;
@@ -802,13 +824,13 @@ $('.page-btn').on('click', function (e) {
 
     switch(current_app) {
         case "queue":
-            app.setLocation('#/'+pagination);
+            app.setLocation('#/' + pagination);
             break;
         case "browse":
-            app.setLocation('#/browse/'+pagination+'/'+browsepath);
+            app.setLocation('#/browse/' + pagination+'/' + browsepath);
             break;
         case "dirble":
-            app.setLocation("#/dirble/"+dirble_catid+"/"+dirble_page);
+            app.setLocation("#/dirble/" + dirble_catid+"/" + dirble_page);
             break;
     }
     e.preventDefault();
@@ -816,7 +838,7 @@ $('.page-btn').on('click', function (e) {
 
 function addStream() {
     if($('#streamurl').val().length > 0) {
-        socket.send('MPD_API_ADD_TRACK,'+$('#streamurl').val());
+        socket.send('MPD_API_ADD_TRACK,' + $('#streamurl').val());
     }
     $('#streamurl').val("");
     $('#addstream').modal('hide');
@@ -839,9 +861,9 @@ function confirmSettings() {
             }, 2000);
             return;
         } else
-            socket.send('MPD_API_SET_MPDPASS,'+$('#mpd_pw').val());
+            socket.send('MPD_API_SET_MPDPASS,' + $('#mpd_pw').val());
     }
-    socket.send('MPD_API_SET_MPDHOST,'+$('#mpdport').val()+','+$('#mpdhost').val());
+    socket.send('MPD_API_SET_MPDHOST,' + $('#mpdport').val() + ',' + $('#mpdhost').val());
     $('#settings').modal('hide');
 }
 
@@ -986,7 +1008,7 @@ function dirble_load_stations() {
                     socket.send("MPD_API_ADD_TRACK," + data.streams[0].stream);
                     $('.top-right').notify({
                         message:{
-                            text: _this.text() + " added"
+                            text: "Added \"" + _this.text() + "\""
                         }
                     }).show();
                 });
@@ -1004,7 +1026,7 @@ function dirble_load_stations() {
                         socket.send("MPD_API_ADD_PLAY_TRACK," + data.streams[0].stream);
                         $('.top-right').notify({
                             message:{
-                                text: _this.text() + " added"
+                                text: "Added \"" + _this.text() + "\""
                             }
                         }).show();
                     });
@@ -1025,7 +1047,7 @@ function dirble_load_stations() {
                     socket.send("MPD_API_ADD_TRACK," + data.streams[0].stream);
                     $('.top-right').notify({
                         message:{
-                            text: _this.text() + " added"
+                            text: "Added \"" + _this.text() + "\""
                         }
                     }).show();
                 });
@@ -1043,7 +1065,7 @@ function dirble_load_stations() {
                         socket.send("MPD_API_ADD_PLAY_TRACK," + data.streams[0].stream);
                         $('.top-right').notify({
                             message:{
-                                text: _this.text() + " added"
+                                text: "Added \"" +_this.text() + "\""
                             }
                         }).show();
                     });

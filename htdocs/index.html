@@ -105,9 +105,7 @@
           </ol>
 
           <div class="col-md-12" id="filter">
-          <button id="add-all-songs" class="btn btn-primary pull-right">Add all</button>
           </div>
-
 
           <!-- Table -->
           <table id="salamisandwich" class="table table-hover">
@@ -116,7 +114,8 @@
                 <th>#</th>
                 <th colspan="2">Track</th>
                 <th>Duration</th>
-                <th></th>
+                <th><a role="button" class="pull-right btn-group-hover" id="addAll" title="Add All">
+                        <span class="glyphicon glyphicon-plus"></span></a></th>
               </tr>
             </thead>
             <tbody>
@@ -296,7 +295,7 @@
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
   </div><!-- /.modal -->
-  
+
   <div class="modal fade" id="savequeue" tabindex="-1" role="dialog" aria-labelledby="savequeueLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
