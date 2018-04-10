@@ -28,6 +28,11 @@ body {
   min-width: 50px;
 }
 
+#filter {
+  overflow: auto;
+  white-space: nowrap;
+}
+
 #search {
   margin-right: -10px;
 }
